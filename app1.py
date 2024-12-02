@@ -1,4 +1,5 @@
 import tkinter as tk
+from ttkbootstrap import Style
 from tkinter import messagebox, simpledialog
 import difflib
 import json
@@ -58,6 +59,8 @@ class TaskLoggerGUI:
         self.root = root
         self.task_logger = task_logger
         self.root.title("To-Do List App")
+
+        style = Style(theme='darkly')  # Use a modern theme from ttkbootstrap
 
         self.frame = tk.Frame(root)
         self.frame.pack(pady=10)

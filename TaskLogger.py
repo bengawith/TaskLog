@@ -80,7 +80,7 @@ def load_tasks():
 
 def save_tasks():
     """Save tasks and completed tasks to the JSON file."""
-    with open("TASKS_FILE", "w") as file:
+    with open(TASKS_FILE, "w") as file:
         json.dump({"tasks": tasks, "complete": completed_tasks}, file)
 
 
@@ -130,8 +130,8 @@ def select_task(index):
 
 def add_task():
     """Add a new task."""
-    task_name = CTkInputDialog(title="Add Task", text="Enter the task name:").get_input()
-    due_date = CTkInputDialog(title="Add Due Date", text="Enter the due date (YYYY-MM-DD):").get_input()
+    task_name = CTkInputDialog(title="Add Task", text="Enter the task name:", button_fg_color="#601E88", fg_color="#3B3B3B", text_color="#F2F2F2", font=("Arial", 12), button_hover_color="#E44982").get_input()
+    due_date = CTkInputDialog(title="Add Due Date", text="Enter the due date (YYYY-MM-DD):", button_fg_color="#601E88", fg_color="#3B3B3B", text_color="#F2F2F2", font=("Arial", 12), button_hover_color="#E44982").get_input()
     if task_name and due_date:
         tasks.append((task_name, due_date))
         save_tasks()

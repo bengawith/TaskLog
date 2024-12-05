@@ -2,6 +2,9 @@ from customtkinter import *
 from PIL import Image
 from datetime import datetime, timedelta
 import json
+import os
+import sys
+import shutil
 
 # Initialize the app
 app = CTk()
@@ -9,10 +12,27 @@ app.geometry("800x480")
 app.resizable(0, 0)
 app.title("Task Logger")
 
-# Ensure tasks.json is created in the same directory as the executable
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TASKS_FILE = os.path.join(BASE_DIR, "tasks.json")
+# Determine the base directory for bundled and non-bundled execution
+if hasattr(sys, '_MEIPASS'):
+    BASE_DIR = sys._MEIPASS  # Directory for PyInstaller's temp folder
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 IMAGE_FILE = os.path.join(BASE_DIR, "tk_sky.jpg")
+
+# Writable directory for tasks.json (user's home directory)
+USER_DATA_DIR = os.path.expanduser("~")  # Example: C:\Users\<username>
+TASKS_FILE = os.path.join(USER_DATA_DIR, "tasks.json")
+
+# Ensure the tasks.json exists in the writable directory
+if not os.path.exists(TASKS_FILE):
+    default_tasks_path = os.path.join(BASE_DIR, "tasks.json")
+    if os.path.exists(default_tasks_path):
+        shutil.copy(default_tasks_path, TASKS_FILE)  # Copy default tasks.json
+    else:
+        with open(TASKS_FILE, "w") as f:
+            json.dump({"tasks": [], "complete": []}, f)  # Create a blank JSON
+
 
 # Load and set the left-side image
 side_img_data = CTkImage(dark_image=Image.open(IMAGE_FILE), size=(400, 480))
@@ -21,7 +41,7 @@ side_img_data = CTkImage(dark_image=Image.open(IMAGE_FILE), size=(400, 480))
 CTkLabel(master=app, text="", image=side_img_data).pack(side="left", fill="both", expand=False)
 
 # Right-side Frame for Tasks
-right_frame = CTkFrame(master=app, width=400, height=480, fg_color="#1F1F1F")  # Dark theme
+right_frame = CTkFrame(master=app, width=400, height=480, fg_color="#1F1F1F")
 right_frame.pack_propagate(False)
 right_frame.pack(side="right", fill="both", expand=True)
 
@@ -29,14 +49,14 @@ right_frame.pack(side="right", fill="both", expand=True)
 CTkLabel(
     master=right_frame,
     text="Welcome to TaskLogger",
-    text_color="#A569BD",  # Purple title color
+    text_color="#A569BD",
     font=("Arial Bold", 24),
 ).pack(pady=(32.5, 5))
 
 CTkLabel(
     master=right_frame,
     text="Manage your tasks efficiently",
-    text_color="#A0A0A0",  # Gray subtitle
+    text_color="#A0A0A0",
     font=("Arial", 12),
 ).pack(pady=(0, 20))
 
@@ -48,7 +68,6 @@ time_label = CTkLabel(
     font=("Arial Bold", 12),
 )
 time_label.place(relx=1, rely=0, x=-10, y=10, anchor="ne")
-
 
 # Task List Frame
 task_frame = CTkFrame(master=right_frame, fg_color="#2B2B2B", corner_radius=10, width=350, height=200)
@@ -77,6 +96,11 @@ def load_tasks():
         tasks = []
         completed_tasks = []
 
+    # Ensure tasks without time have a default time of 23:59:59
+    for i, task in enumerate(tasks):
+        if len(task) == 2:
+            tasks[i] = (*task, "23:59:59")
+
 
 def save_tasks():
     """Save tasks and completed tasks to the JSON file."""
@@ -90,28 +114,29 @@ def update_task_list():
     for widget in task_list.winfo_children():
         widget.destroy()
 
-    # Sort tasks by due date
-    tasks.sort(key=lambda task: datetime.strptime(task[1], "%Y-%m-%d"))
+    # Sort tasks by combined date and time
+    tasks.sort(key=lambda task: datetime.strptime(f"{task[1]} {task[2]}", "%Y-%m-%d %H:%M:%S"))
 
-    for index, (task, date) in enumerate(tasks):
-        due_date = datetime.strptime(date, "%Y-%m-%d")
+    for index, (task, date, time) in enumerate(tasks):
+        due_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M:%S")
         now = datetime.now()
-        time_remaining = due_date - now
-        if time_remaining.total_seconds() > 0:
-            days, seconds = divmod(time_remaining.total_seconds(), 86400)
-            hours, seconds = divmod(seconds, 3600)
-            minutes, seconds = divmod(seconds, 60)
-            time_str = f"Remaining: {int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s"
-            time_color = "#FFFFFF"
-        else:
+        time_remaining = due_datetime - now
+
+        if time_remaining.total_seconds() <= 0:
             time_str = "Overdue!"
             time_color = "#FF4C4C"  # Red for overdue
+        elif time_remaining.days < 7:
+            time_str = f"Remaining: {time_remaining.days}d {time_remaining.seconds // 3600}h"
+            time_color = "#FFA500"  # Orange for less than 7 days
+        else:
+            time_str = f"Remaining: {time_remaining.days}d {time_remaining.seconds // 3600}h"
+            time_color = "#00FF00"  # Green for more than 7 days
 
         task_label = CTkLabel(
             master=task_list,
-            text=f"{task} (Due: {date})\n{time_str}",
+            text=f"{task} ({date} {time})\n{time_str}",
             fg_color="#3B3B3B" if index != selected_task_index else "#601E88",
-            text_color=time_color if time_str == "Overdue!" else "#FFFFFF",
+            text_color=time_color,
             font=("Arial", 12),
             corner_radius=8,
             anchor="center",
@@ -130,10 +155,40 @@ def select_task(index):
 
 def add_task():
     """Add a new task."""
-    task_name = CTkInputDialog(title="Add Task", text="Enter the task name:", button_fg_color="#601E88", fg_color="#3B3B3B", text_color="#F2F2F2", font=("Arial", 12), button_hover_color="#E44982").get_input()
-    due_date = CTkInputDialog(title="Add Due Date", text="Enter the due date (YYYY-MM-DD):", button_fg_color="#601E88", fg_color="#3B3B3B", text_color="#F2F2F2", font=("Arial", 12), button_hover_color="#E44982").get_input()
+    task_name = CTkInputDialog(
+        title="Add Task",
+        text="Enter the task name:",
+        button_fg_color="#601E88",
+        fg_color="#3B3B3B",
+        text_color="#F2F2F2",
+        font=("Arial", 12),
+        button_hover_color="#E44982"
+    ).get_input()
+
+    due_date = CTkInputDialog(
+        title="Add Due Date",
+        text="Enter the due date (YYYY-MM-DD):",
+        button_fg_color="#601E88",
+        fg_color="#3B3B3B",
+        text_color="#F2F2F2",
+        font=("Arial", 12),
+        button_hover_color="#E44982"
+    ).get_input()
+
+    due_time = CTkInputDialog(
+        title="Add Due Time",
+        text="Enter the due time (H:M:S) [Optional]:",
+        button_fg_color="#601E88",
+        fg_color="#3B3B3B",
+        text_color="#F2F2F2",
+        font=("Arial", 12),
+        button_hover_color="#E44982"
+    ).get_input()
+
     if task_name and due_date:
-        tasks.append((task_name, due_date))
+        if not due_time:
+            due_time = "23:59:59"  # Default time
+        tasks.append((task_name, due_date, due_time))
         save_tasks()
         update_task_list()
 
@@ -165,12 +220,12 @@ def view_completed_tasks():
         for widget in completed_task_list.winfo_children():
             widget.destroy()
 
-        for index, (task, date) in enumerate(completed_tasks):
+        for index, (task, date, time) in enumerate(completed_tasks):
             task_label = CTkLabel(
                 master=completed_task_list,
-                text=f"{task} (Due: {date})",
+                text=f"{task} ({date} {time})",
                 fg_color="#3B3B3B" if index != selected_completed_index else "#601E88",
-                text_color="#FFFFFF" if index != selected_completed_index else "#FFFFFF",
+                text_color="#FFFFFF",
                 font=("Arial", 12),
                 corner_radius=8,
                 anchor="center",
@@ -187,7 +242,6 @@ def view_completed_tasks():
 
     selected_completed_index = None
 
-    # Create a Toplevel window
     completed_window = CTkToplevel(app)
     completed_window.title("Completed Tasks")
     completed_window.geometry("400x350")
@@ -205,7 +259,6 @@ def view_completed_tasks():
 
     update_completed_list()
 
-    # Button for marking incomplete
     CTkButton(
         master=completed_window,
         text="Mark Incomplete",
@@ -221,14 +274,13 @@ def edit_task():
     """Edit the selected task."""
     global selected_task_index
     if selected_task_index is not None:
-        current_task, current_date = tasks[selected_task_index]
+        current_task, current_date, current_time = tasks[selected_task_index]
 
-        # Create a custom edit dialog
         edit_dialog = CTkToplevel(app)
         edit_dialog.title("Edit Task")
-        edit_dialog.geometry("400x250")
+        edit_dialog.geometry("400x300")
         edit_dialog.resizable(False, False)
-        edit_dialog.configure(fg_color="#1F1F1F")  # Dark theme
+        edit_dialog.configure(fg_color="#1F1F1F")
 
         CTkLabel(master=edit_dialog, text="Edit Task Name:", text_color="#FFFFFF", font=("Arial", 12)).pack(pady=10)
         task_entry = CTkEntry(master=edit_dialog, width=300, fg_color="#3B3B3B", text_color="#FFFFFF")
@@ -240,11 +292,17 @@ def edit_task():
         date_entry.insert(0, current_date)
         date_entry.pack(pady=5)
 
+        CTkLabel(master=edit_dialog, text="Edit Due Time (H:M:S):", text_color="#FFFFFF", font=("Arial", 12)).pack(pady=10)
+        time_entry = CTkEntry(master=edit_dialog, width=300, fg_color="#3B3B3B", text_color="#FFFFFF")
+        time_entry.insert(0, current_time)
+        time_entry.pack(pady=5)
+
         def save_edits():
             new_task = task_entry.get()
             new_date = date_entry.get()
+            new_time = time_entry.get() or "23:59:59"
             if new_task and new_date:
-                tasks[selected_task_index] = (new_task, new_date)
+                tasks[selected_task_index] = (new_task, new_date, new_time)
                 save_tasks()
                 update_task_list()
                 edit_dialog.destroy()
@@ -275,62 +333,31 @@ def update_time():
     now = datetime.now().strftime("%A, %Y-%m-%d %H:%M:%S")
     time_label.configure(text=now)
     update_task_list()
-    app.after(1000, update_time)  # Update every second
+    app.after(1000, update_time)
 
 
 # Button Section
 button_frame = CTkFrame(master=right_frame, fg_color="#1F1F1F", corner_radius=0)
 button_frame.pack(pady=(10, 0))
 
-# Styling Buttons
 button_style = {
-    "fg_color": "#601E88",  # Purple button color
-    "hover_color": "#E44982",  # Hover effect
+    "fg_color": "#601E88",
+    "hover_color": "#E44982",
     "font": ("Arial Bold", 12),
     "text_color": "#FFFFFF",
     "width": 180,
     "corner_radius": 8,
 }
 
-# Adding Buttons
-CTkButton(
-    master=button_frame,
-    text="Add Task",
-    **button_style,
-    command=add_task,
-).grid(row=0, column=0, padx=10, pady=5)
-
-CTkButton(
-    master=button_frame,
-    text="Mark Completed",
-    **button_style,
-    command=mark_task_completed,
-).grid(row=0, column=1, padx=10, pady=5)
-
-CTkButton(
-    master=button_frame,
-    text="View Completed",
-    **button_style,
-    command=view_completed_tasks,
-).grid(row=1, column=0, padx=10, pady=5)
-
-CTkButton(
-    master=button_frame,
-    text="Edit Task",
-    **button_style,
-    command=edit_task,
-).grid(row=1, column=1, padx=10, pady=5)
-
-CTkButton(
-    master=button_frame,
-    text="Delete Task",
-    **button_style,
-    command=delete_task,
-).grid(row=2, column=0, columnspan=2, pady=10)
+CTkButton(master=button_frame, text="Add Task", **button_style, command=add_task).grid(row=0, column=0, padx=10, pady=5)
+CTkButton(master=button_frame, text="Mark Completed", **button_style, command=mark_task_completed).grid(row=0, column=1, padx=10, pady=5)
+CTkButton(master=button_frame, text="View Completed", **button_style, command=view_completed_tasks).grid(row=1, column=0, padx=10, pady=5)
+CTkButton(master=button_frame, text="Edit Task", **button_style, command=edit_task).grid(row=1, column=1, padx=10, pady=5)
+CTkButton(master=button_frame, text="Delete Task", **button_style, command=delete_task).grid(row=2, column=0, columnspan=2, pady=10)
 
 # Load tasks on startup
 load_tasks()
-update_time()  # Start the time updates
+update_time()
 update_task_list()
 
 # Run the app

@@ -197,7 +197,7 @@ def mark_task_completed():
     """Mark the selected task as completed."""
     global selected_task_index
     if selected_task_index is not None:
-        completed_tasks.append(tasks.pop(selected_task_index))
+        completed_tasks.append(tasks.pop(tasks[selected_task_index]))
         selected_task_index = None
         save_tasks()
         update_task_list()
@@ -245,7 +245,7 @@ def view_completed_tasks():
     completed_window = CTkToplevel(app)
     completed_window.title("Completed Tasks")
     completed_window.geometry("400x350")
-    completed_window.resizable(False, False)
+    completed_window.resizable(True, False)
 
     CTkLabel(
         master=completed_window,

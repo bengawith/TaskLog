@@ -18,8 +18,8 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Ensure tasks.json is created in the same directory as the executable
-TASKS_FILE = os.path.join(BASE_DIR, "tasks.json")
-IMAGE_FILE = os.path.join(BASE_DIR, "tk_sky.jpg")
+TASKS_FILE = os.path.join(BASE_DIR, "static/json/tasks.json")
+IMAGE_FILE = os.path.join(BASE_DIR, "static/images/tk_sky.jpg")
 
 # Load and set the left-side image
 side_img_data = CTkImage(dark_image=Image.open(IMAGE_FILE), size=(400, 480))

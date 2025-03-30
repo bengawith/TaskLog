@@ -12,9 +12,9 @@ class TaskManager:
             self.data_dir = os.path.join(os.path.expanduser("~"), ".tasklogger")
             if not os.path.exists(self.data_dir):
                 os.makedirs(self.data_dir)
-            self.tasks_file = os.path.join(self.data_dir, "tasks.json")
+            self.tasks_file = os.path.join(self.data_dir, "tl_tasks.json")
             # Copy the bundled default tasks.json if it doesn't exist.
-            bundled_tasks_path = os.path.join(sys._MEIPASS, "static", "json", "tasks.json")
+            bundled_tasks_path = os.path.join(sys._MEIPASS, "static", "json", "tl_tasks.json")
             if not os.path.exists(self.tasks_file):
                 if os.path.exists(bundled_tasks_path):
                     shutil.copy(bundled_tasks_path, self.tasks_file)
@@ -24,7 +24,7 @@ class TaskManager:
         else:
             # In development, use the original file location.
             self.base_dir = base_dir
-            self.tasks_file = os.path.join(self.base_dir, "static", "json", "tasks.json")
+            self.tasks_file = os.path.join(self.base_dir, "static", "json", "tl_tasks.json")
         
         self.tasks = []
         self.completed_tasks = []
@@ -32,7 +32,7 @@ class TaskManager:
         
     def ensure_tasks_file(self):
         if not os.path.exists(self.tasks_file):
-            default_tasks_path = os.path.join(self.base_dir, "tasks.json")
+            default_tasks_path = os.path.join(self.base_dir, "tl_tasks.json")
             if os.path.exists(default_tasks_path):
                 shutil.copy(default_tasks_path, self.tasks_file)
             else:

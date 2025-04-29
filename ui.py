@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 import sys
 import tkinter.messagebox as mbox
-
+from constants import *
 from task_manager import TaskManager
 
 class TaskLoggerApp:
@@ -30,7 +30,7 @@ class TaskLoggerApp:
         CTkLabel(master=self.app, text="", image=self.side_img_data).pack(side="left", fill="both", expand=False)
         
         # Create right-side frame.
-        self.right_frame = CTkFrame(master=self.app, width=400, height=480, fg_color="#1F1F1F")
+        self.right_frame = CTkFrame(master=self.app, width=400, height=480, fg_color=BLACK)
         self.right_frame.pack_propagate(False)
         self.right_frame.pack(side="right", fill="both", expand=True)
         
@@ -38,42 +38,42 @@ class TaskLoggerApp:
         CTkLabel(
             master=self.right_frame,
             text="Welcome to TaskLogger",
-            text_color="#A569BD",
-            font=("Arial Bold", 24)
+            text_color=LIGHT_PURPLE,
+            font=LARGE_BOLD
         ).pack(pady=(32.5, 5))
         CTkLabel(
             master=self.right_frame,
             text="Manage your tasks efficiently",
-            text_color="#A0A0A0",
-            font=("Arial", 12)
+            text_color=LIGHT_GREY,
+            font=SMALL
         ).pack(pady=(0, 20))
         
         # Current time label.
         self.time_label = CTkLabel(
             master=self.right_frame,
             text="",
-            text_color="#FFFFFF",
-            font=("Arial Bold", 12)
+            text_color=WHITE,
+            font=SMALL_BOLD
         )
         self.time_label.place(relx=1, rely=0, x=-10, y=10, anchor="ne")
         
         # Task list frame.
-        self.task_frame = CTkFrame(master=self.right_frame, fg_color="#2B2B2B", corner_radius=10, width=350, height=200)
+        self.task_frame = CTkFrame(master=self.right_frame, fg_color=GREY, corner_radius=10, width=350, height=200)
         self.task_frame.pack_propagate(False)
         self.task_frame.pack(pady=(10,20))
-        self.task_list = CTkScrollableFrame(master=self.task_frame, fg_color="#3B3B3B", corner_radius=10, width=350, height=200)
+        self.task_list = CTkScrollableFrame(master=self.task_frame, fg_color=DARK_GREY, corner_radius=10, width=350, height=200)
         self.task_list.pack(fill="both", expand=True, anchor="center", padx=10, pady=10)
         
         self.selected_task_index = None
         
         # Button frame.
-        self.button_frame = CTkFrame(master=self.right_frame, fg_color="#1F1F1F", corner_radius=0)
+        self.button_frame = CTkFrame(master=self.right_frame, fg_color=BLACK, corner_radius=0)
         self.button_frame.pack(pady=(10, 0))
         self.button_style = {
-            "fg_color": "#601E88",
-            "hover_color": "#E44982",
-            "font": ("Arial Bold", 12),
-            "text_color": "#FFFFFF",
+            "fg_color": PURPLE,
+            "hover_color": PINK,
+            "font": SMALL_BOLD,
+            "text_color": WHITE,
             "width": 180,
             "corner_radius": 8,
         }
@@ -113,20 +113,20 @@ class TaskLoggerApp:
             
             if time_remaining.total_seconds() <= 0:
                 time_str = "Overdue!"
-                time_color = "#FF4C4C"
+                time_color = RED
             elif time_remaining.days < 7:
                 time_str = f"Remaining: {time_remaining.days}d {time_remaining.seconds // 3600}h"
-                time_color = "#FFA500"
+                time_color = ORANGE
             else:
                 time_str = f"Remaining: {time_remaining.days}d {time_remaining.seconds // 3600}h"
-                time_color = "#00FF00"
+                time_color = GREEN
             
             task_label = CTkLabel(
                 master=self.task_list,
                 text=f"{task} ({date} {time})\n{time_str}",
-                fg_color="#3B3B3B" if index != self.selected_task_index else "#601E88",
+                fg_color=DARK_GREY if index != self.selected_task_index else PURPLE,
                 text_color=time_color,
-                font=("Arial", 12),
+                font=SMALL,
                 corner_radius=8,
                 anchor="center",
                 justify="center"
@@ -135,38 +135,43 @@ class TaskLoggerApp:
             task_label.bind("<Button-1>", lambda event, idx=index: self.select_task(idx))
     
     def select_task(self, index):
-        self.selected_task_index = index
+        if self.selected_task_index == index:
+            # If the task is already selected, deselect it
+            self.selected_task_index = None
+        else:
+            # If the task is not selected, select it
+            self.selected_task_index = index
         self.update_task_list()
     
     def add_task_dialog(self):
         task_name = CTkInputDialog(
             title="Add Task",
             text="Enter the task name:",
-            button_fg_color="#601E88",
-            fg_color="#3B3B3B",
-            text_color="#F2F2F2",
-            font=("Arial", 12),
-            button_hover_color="#E44982"
+            button_fg_color=PURPLE,
+            fg_color=DARK_GREY,
+            text_color=WHITE,
+            font=SMALL,
+            button_hover_color=PINK
         ).get_input()
         
         if task_name:
             due_date = CTkInputDialog(
                 title="Add Due Date",
                 text="Enter the due date (YYYY-MM-DD):\nIf not provided, current date used",
-                button_fg_color="#601E88",
-                fg_color="#3B3B3B",
-                text_color="#F2F2F2",
-                font=("Arial", 12),
-                button_hover_color="#E44982"
+                button_fg_color=PURPLE,
+                fg_color=DARK_GREY,
+                text_color=WHITE,
+                font=SMALL,
+                button_hover_color=PINK
             ).get_input()
             due_time = CTkInputDialog(
                 title="Add Due Time",
                 text="Enter the due time (H:M) [Optional]:",
-                button_fg_color="#601E88",
-                fg_color="#3B3B3B",
-                text_color="#F2F2F2",
-                font=("Arial", 12),
-                button_hover_color="#E44982"
+                button_fg_color=PURPLE,
+                fg_color=DARK_GREY,
+                text_color=WHITE,
+                font=SMALL,
+                button_hover_color=PINK
             ).get_input()
             
             # Validate the due_date format.
@@ -200,22 +205,22 @@ class TaskLoggerApp:
             edit_dialog.title("Edit Task")
             edit_dialog.geometry("400x300")
             edit_dialog.resizable(False, False)
-            edit_dialog.configure(fg_color="#1F1F1F")
+            edit_dialog.configure(fg_color=BLACK)
             edit_dialog.lift()
             edit_dialog.focus_force()
             
-            CTkLabel(edit_dialog, text="Edit Task Name:", text_color="#FFFFFF", font=("Arial", 12)).pack(pady=10)
-            task_entry = CTkEntry(edit_dialog, width=300, fg_color="#3B3B3B", text_color="#FFFFFF")
+            CTkLabel(edit_dialog, text="Edit Task Name:", text_color=WHITE, font=SMALL).pack(pady=10)
+            task_entry = CTkEntry(edit_dialog, width=300, fg_color=DARK_GREY, text_color=WHITE)
             task_entry.insert(0, current_task)
             task_entry.pack(pady=5)
             
-            CTkLabel(edit_dialog, text="Edit Due Date (YYYY-MM-DD):", text_color="#FFFFFF", font=("Arial", 12)).pack(pady=10)
-            date_entry = CTkEntry(edit_dialog, width=300, fg_color="#3B3B3B", text_color="#FFFFFF")
+            CTkLabel(edit_dialog, text="Edit Due Date (YYYY-MM-DD):", text_color=WHITE, font=SMALL).pack(pady=10)
+            date_entry = CTkEntry(edit_dialog, width=300, fg_color=DARK_GREY, text_color=WHITE)
             date_entry.insert(0, current_date)
             date_entry.pack(pady=5)
             
-            CTkLabel(edit_dialog, text="Edit Due Time (H:M) [Optional]:", text_color="#FFFFFF", font=("Arial", 12)).pack(pady=10)
-            time_entry = CTkEntry(edit_dialog, width=300, fg_color="#3B3B3B", text_color="#FFFFFF")
+            CTkLabel(edit_dialog, text="Edit Due Time (H:M) [Optional]:", text_color=WHITE, font=SMALL).pack(pady=10)
+            time_entry = CTkEntry(edit_dialog, width=300, fg_color=DARK_GREY, text_color=WHITE)
             time_entry.insert(0, current_time)
             time_entry.pack(pady=5)
             
@@ -235,10 +240,10 @@ class TaskLoggerApp:
             CTkButton(
                 edit_dialog,
                 text="Save",
-                fg_color="#601E88",
-                hover_color="#E44982",
-                font=("Arial Bold", 12),
-                text_color="#FFFFFF",
+                fg_color=PURPLE,
+                hover_color=PINK,
+                font=SMALL_BOLD,
+                text_color=WHITE,
                 command=save_edits
             ).pack(pady=10)
     
@@ -259,9 +264,9 @@ class TaskLoggerApp:
                 task_label = CTkLabel(
                     master=completed_task_list,
                     text=f"{task} ({date} {time})",
-                    fg_color="#3B3B3B" if index != selected_completed_index else "#601E88",
-                    text_color="#FFFFFF",
-                    font=("Arial", 12),
+                    fg_color=DARK_GREY if index != selected_completed_index else PURPLE,
+                    text_color=WHITE,
+                    font=SMALL,
                     corner_radius=8,
                     anchor="center",
                     justify="center"
@@ -285,11 +290,11 @@ class TaskLoggerApp:
         CTkLabel(
             master=completed_window,
             text="Completed Tasks",
-            text_color="#A569BD",
-            font=("Arial Bold", 18)
+            text_color=LIGHT_PURPLE,
+            font=MEDIUM_BOLD
         ).pack(pady=(10, 10))
         
-        completed_task_list = CTkScrollableFrame(master=completed_window, fg_color="#2B2B2B", width=350, height=150)
+        completed_task_list = CTkScrollableFrame(master=completed_window, fg_color=GREY, width=350, height=150)
         completed_task_list.pack(fill="both", expand=True, padx=10, pady=10)
         
         update_completed_list()
@@ -297,10 +302,10 @@ class TaskLoggerApp:
         CTkButton(
             master=completed_window,
             text="Mark Incomplete",
-            fg_color="#601E88",
-            hover_color="#E44982",
-            font=("Arial Bold", 12),
-            text_color="#FFFFFF",
+            fg_color=PURPLE,
+            hover_color=PINK,
+            font=SMALL_BOLD,
+            text_color=WHITE,
             command=mark_incomplete
         ).pack(pady=10)
     

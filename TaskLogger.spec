@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='static/images/TL.ico'
+    icon='static/images/TL_new.ico'
 )

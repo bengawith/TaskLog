@@ -66,6 +66,7 @@ class TaskLoggerApp:
         self.task_list.pack(fill="both", expand=True, anchor="center", padx=10, pady=10)
         
         self.selected_tasks = []
+        self.selected_completed_tasks = []
         
         # Button frame.
         self.button_frame = CTkFrame(master=self.right_frame, fg_color=COLOURS['BLACK'], corner_radius=0)
@@ -194,14 +195,14 @@ class TaskLoggerApp:
             for task_index in self.selected_tasks:
                 self.task_manager.mark_task_completed(task_index)
                 self.selected_tasks.remove(task_index)
-                self.update_task_list()
+            self.update_task_list()
     
     def delete_task_ui(self):
         if len(self.selected_tasks) > 0:
             for task_index in self.selected_tasks:
                 self.task_manager.delete_task(task_index)
                 self.selected_tasks.remove(task_index)
-                self.update_task_list()
+            self.update_task_list()
     
     def edit_task_dialog(self):
         if len(self.selected_tasks) > 0:
@@ -256,12 +257,12 @@ class TaskLoggerApp:
     
     def view_completed_tasks(self):
         def mark_incomplete():
-            nonlocal selected_completed_index
-            if selected_completed_index is not None:
-                self.task_manager.mark_task_incomplete(selected_completed_index)
-                selected_completed_index = None
+            if len(self.selected_completed_tasks) > 0:
+                for completed_index in self.selected_completed_tasks:
+                    self.task_manager.mark_task_incomplete(completed_index)
+                    self.selected_completed_tasks.remove(completed_index)
                 update_completed_list()
-                self.update_task_list()
+            self.update_task_list()
         
         def update_completed_list():
             for widget in completed_task_list.winfo_children():
@@ -271,7 +272,7 @@ class TaskLoggerApp:
                 task_label = CTkLabel(
                     master=completed_task_list,
                     text=f"{task} ({date} {time})",
-                    fg_color=COLOURS['DARK_GREY'] if index != selected_completed_index else COLOURS['PURPLE'],
+                    fg_color=COLOURS['PINK'] if index in self.selected_completed_tasks else COLOURS['PURPLE'],
                     text_color=COLOURS['WHITE'],
                     font=SMALL,
                     corner_radius=8,
@@ -282,11 +283,12 @@ class TaskLoggerApp:
                 task_label.bind("<Button-1>", lambda event, idx=index: select_completed_task(idx))
         
         def select_completed_task(index):
-            nonlocal selected_completed_index
-            selected_completed_index = index
+            if index in self.selected_completed_tasks:
+                self.selected_completed_tasks.remove(index)
+            else:
+                self.selected_completed_tasks.append(index)
             update_completed_list()
         
-        selected_completed_index = None
         completed_window = CTkToplevel(self.app)
         completed_window.title("Completed Tasks")
         completed_window.geometry("400x350")

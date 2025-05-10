@@ -293,6 +293,7 @@ class TaskLoggerApp:
         completed_window.title("Completed Tasks")
         completed_window.geometry("400x350")
         completed_window.resizable(True, False)
+        completed_window.configure(fg_color=COLOURS['BLACK'])
         completed_window.lift()        # Bring window to front
         completed_window.focus_force()
         
